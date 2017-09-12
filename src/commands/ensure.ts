@@ -16,11 +16,16 @@ export default async function ensure(
 
     for (let [context, translations] of Object.entries(template.translations)) {
         const localeTranslations = localeCatalog.translations[context];
+        if (localeTranslations == null) {
+            untranslatedMsgs.push(...Object.keys(translations).map(
+                msgid => [context, msgid] as [string, string]
+            ));
+            continue;
+        }
 
         for (let msgid of Object.keys(translations)) {
-            const { msgstr } = localeTranslations[msgid];
-
-            if (msgstr.every(str => str === '')) {
+            const translation = localeTranslations[msgid];
+            if (translation == null || translation.msgstr.every(str => str === '')) {
                 untranslatedMsgs.push([context, msgid]);
             }
         }
@@ -30,7 +35,7 @@ export default async function ensure(
         console.error([
             `There are ${untranslatedMsgs.length} untranslated messages:`,
             '',
-            ...untranslatedMsgs.map(([context, msgid]) => `msgid: ${msgid}, msgctxt: ${context}`)
+            ...untranslatedMsgs.map(([context, msgid]) => `msgid: ${msgid}${context && `, msgctxt: ${context}`}`),
         ].join('\n'));
         process.exit(untranslatedMsgs.length);
     }
