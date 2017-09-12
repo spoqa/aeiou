@@ -20,7 +20,7 @@ yargs
         yargs.option('password', { describe: 'transifex 비밀번호', type: 'string', demandOption: true });
         yargs.option('project', { describe: 'transifex 프로젝트', type: 'string', demandOption: true });
         yargs.option('resource', { describe: 'transifex 리소스', type: 'string', demandOption: true });
-        yargs.option('potDir', { describe: 'messages.pot 경로', type: 'string', demandOption: true });
+        yargs.option('potDir', { describe: 'messages.pot 파일이 들어있는 디렉토리', type: 'string', demandOption: true });
         return yargs;
     }, async argv => {
         const { id, password, project, resource, potDir } = argv;
