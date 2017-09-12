@@ -56,7 +56,7 @@ export interface Translation {
     };
 }
 export interface Context {
-    [translation: string]: Translation;
+    [msgid: string]: Translation;
 }
 export interface Translations {
     [context: string]: Context;
