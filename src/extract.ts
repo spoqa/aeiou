@@ -10,6 +10,9 @@ import {
     isStringLiteral,
     Node,
 } from 'typescript';
+import * as t from 'babel-types';
+import * as babylon from 'babylon';
+import traverse from 'babel-traverse';
 import * as gettextParser from 'gettext-parser';
 import * as format from 'date-fns/format';
 import merge = require('lodash.merge');
@@ -142,24 +145,46 @@ export class CatalogValidationError extends Error {}
 export async function generateCatalog(filenames: string[], workingDirectory: string) {
     const catalog = new Catalog();
     for (let filename of filenames) {
+        const isTypescript = /\.tsx?$/.test(filename);
         const sourceCode = await readFileAsync(path.join(workingDirectory, filename), 'utf8') as string;
         console.info(`extarcting messages from ${ filename }`);
-        for (let [lineno, character, msgid, msgid_plural, msgctxt] of extractTs(sourceCode, filename)) {
-            catalog.add(filename, lineno, character, msgid, msgid_plural, msgctxt);
+        const extractor = isTypescript ? tsExtractor : jsExtractor;
+        for (let [line, column, msgid, msgid_plural, msgctxt] of extract(sourceCode, filename, extractor)) {
+            catalog.add(filename, line + 1, column + 1, msgid, msgid_plural, msgctxt);
         }
     }
     return catalog;
 }
 
-export function *extractTs(
+type ExtractResult = [ number, number, string, (string | null), (string | null) ];
+
+interface SourceLocation {
+    // zero based
+    start: {
+        line: number,
+        column: number,
+    };
+    end: {
+        line: number,
+        column: number,
+    };
+}
+
+interface CallExpression {
+    loc: SourceLocation;
+    name: string;
+    args: (string | null)[];
+}
+
+function *extract(
     sourceCode: string,
     filename='(no filename)',
-): Iterable<[ number, number, string, (string | null), (string | null) ]> {
-    const nodes = getCallExpressions(sourceCode, filename);
+    callExpressionExtractor: (sourceCode: string, filename: string) => Iterable<CallExpression>,
+): Iterable<ExtractResult> {
+    const nodes = callExpressionExtractor(sourceCode, filename);
     for (let node of nodes) {
         const {
-            line,
-            character,
+            loc: { start: { line, column } },
             name,
             args,
         } = node;
@@ -178,7 +203,7 @@ export function *extractTs(
         }
         yield [
             line,
-            character,
+            column,
             msg.msgid,
             msg.msgid_plural || null,
             msg.msgctxt || null,
@@ -186,15 +211,45 @@ export function *extractTs(
     }
 }
 
-interface CallExpression {
-    filename: string;
-    line: number;
-    character: number;
-    name: string;
-    args: (string | null)[];
+function jsExtractor(
+    sourceCode: string,
+    filename='(no filename)',
+): CallExpression[] {
+    const file = babylon.parse(sourceCode, {
+        sourceFilename: filename,
+        plugins: [
+            'jsx',
+            'flow',
+            'objectRestSpread',
+            'decorators',
+            'classProperties',
+            'exportExtensions',
+            'asyncGenerators',
+            'dynamicImport',
+        ],
+    });
+    const nodes: CallExpression[] = [];
+    traverse(file, {
+        CallExpression(path) {
+            const { callee, loc, arguments: args } = path.node;
+            if (!t.isIdentifier(callee) || !loc) {
+                return;
+            }
+            const { start, end } = loc;
+            nodes.push({
+                loc: {
+                    start: { line: start.line - 1, column: start.column },
+                    end: { line: end.line - 1, column: end.column },
+                },
+                name: callee.name,
+                args: args.map(arg => t.isStringLiteral(arg) ? arg.value : null),
+            });
+        }
+    });
+    return nodes;
 }
 
-function getCallExpressions(sourceCode: string, filename: string) {
+function tsExtractor(sourceCode: string, filename: string) {
     const nodes: CallExpression[] = [];
     function delintNode(node: Node) {
         function transformArg(arg: Node): string | null {
@@ -210,12 +265,14 @@ function getCallExpressions(sourceCode: string, filename: string) {
         }
         if (isCallExpression(node)) {
             const { expression, arguments: args } = node;
-            const { line, character } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+            const start = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+            const end = sourceFile.getLineAndCharacterOfPosition(node.getEnd());
             const text = (expression as any).text;
             nodes.push({
-                filename,
-                line: line + 1,
-                character: character + 1,
+                loc: {
+                    start: { line: start.line, column: start.character },
+                    end: { line: end.line, column: end.character },
+                },
                 name: text ? `${ text }` : '',
                 args: args.map(transformArg),
             });

@@ -12,7 +12,7 @@ export default async function extract(
     srcDir: string,
     outDir: string,
 ) {
-    const files = await globAsync('**/*.@(ts|tsx)', { cwd: srcDir });
+    const files = await globAsync('**/*.@(js|jsx|mjs|ts|tsx)', { cwd: srcDir });
     const pot = (await generateCatalog(files, srcDir)).toString();
     const savingPath = path.join(outDir, 'messages.pot');
     console.info(`writing PO template file to ${ savingPath }`);
