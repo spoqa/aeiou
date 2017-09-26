@@ -1,6 +1,8 @@
 # 아에이오우
 스포카 프론트엔드 프로젝트에서 사용하는 국제화 스크립트입니다.
 
+[아에이오우 튜토리얼](https://spoqa.github.io/2017/09/26/aeiou-tutorial.html)
+
 # 기능
 - js, ts 파일들을 읽고, 그 안에 있는 `gettext` 함수 호출식을 긁어서 `messages.pot` 파일을 생성합니다.
 - transifex로 `messages.pot`파일을 업로드합니다.
