@@ -217,6 +217,7 @@ function jsExtractor(
 ): CallExpression[] {
     const file = babylon.parse(sourceCode, {
         sourceFilename: filename,
+        sourceType: 'module',
         plugins: [
             'jsx',
             'flow',
