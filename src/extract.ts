@@ -117,6 +117,14 @@ export class Catalog implements CatalogData {
     mergeTranslations(translations: Translations) {
         merge(this.translations, translations);
     }
+    // 나머지 내용들은 보존한 채, msgstr들만 비웁니다.
+    clearMsgstr() {
+        for (const context of Object.values(this.translations)) {
+            for (const message of Object.values(context)) {
+                message.msgstr.fill('');
+            }
+        }
+    }
     toBuffer(): Buffer {
         return gettextParser.mo.compile(this);
     }
