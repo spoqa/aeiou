@@ -26,6 +26,7 @@ interface Specs {
 }
 const specs: Specs = {
     lazyGettext: ['msgid'],
+    lazyPgettext: ['msgctxt', 'msgid'],
     gettext: ['msgid'],
     dgettext: [null, 'msgid'],
     ngettext: ['msgid', 'msgid_plural'],
