@@ -14,38 +14,8 @@ export function globAsync(pattern: string, options={}): Promise<string[]> {
     });
 }
 
-export function mkdirp(path: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-        fs.mkdirs(path, (err: any) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve();
-            }
-        });
-    });
-}
+export const mkdirp = fs.mkdirp;
 
-export function writeFileAsync(path: string, data: string | Buffer, option={}): Promise<void> {
-    return new Promise((resolve, reject) => {
-        fs.writeFile(path, data, option, (err: any) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve();
-            }
-        });
-    });
-}
+export const writeFileAsync = fs.writeFile;
 
-export function readFileAsync(path: string, option={}): Promise<string | Buffer> {
-    return new Promise((resolve, reject) => {
-        fs.readFile(path, option, (err: any, data: any) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        });
-    });
-}
+export const readFileAsync = fs.readFile;
