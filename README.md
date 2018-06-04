@@ -41,8 +41,8 @@ aeiou ensure --locale="ja" --potDir="./src/static/translations"
 ```
 
 ## aeiou 개발하기
-- `npm install`
-- `npm run build` or `npm run dev`
+- `npm install`(`yarn`)
+- `npm run build`(`yarn build`) or `npm run dev`(`yarn dev`)
 - `.js` 파일은 컴파일된 결과입니다. 손으로 고치지 맙시다.
     - vscode의 경우 좌측 파일트리의 `.js` 파일들이 신경쓰이면
         - 상단 메뉴에서 `Code` > `기본 설정` > `설정`으로 들어갑니다.
@@ -53,3 +53,15 @@ aeiou ensure --locale="ja" --potDir="./src/static/translations"
                 "**/*.js": true
             }
             ```
+
+### lockfile 업데이트
+
+npm을 사용한 경우 `yarn import`를 써서 `yarn.lock`을 업데이트합니다.
+
+yarn을 사용한 경우 다음 방법으로 `package-lock.json`을 업데이트합니다.
+
+```sh
+rm package-lock.json
+npm shrinkwrap
+mv npm-shrinkwrap.json package-lock.json
+```
