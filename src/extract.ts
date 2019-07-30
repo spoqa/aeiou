@@ -18,8 +18,6 @@ import * as format from 'date-fns/format';
 import merge = require('lodash.merge');
 import includes = require('lodash.includes');
 import zipObject = require('lodash.zipobject');
-import omitBy = require('lodash.omitby');
-import isNil = require('lodash.isnil');
 
 import { readFileAsync } from './file';
 
@@ -28,6 +26,7 @@ interface Specs {
 }
 const specs: Specs = {
     lazyGettext: ['msgid'],
+    lazyPgettext: ['msgctxt', 'msgid'],
     gettext: ['msgid'],
     dgettext: [null, 'msgid'],
     ngettext: ['msgid', 'msgid_plural'],
@@ -103,16 +102,20 @@ export class Catalog implements CatalogData {
             message.comments.reference += `\n${ filename }:${ lineno },${ character }`;
             return;
         }
-        context[msgid] = omitBy({
+        context[msgid] = {
             msgid,
-            msgid_plural,
-            msgctxt,
             // TODO: 헤더의 Plural-Forms을 보고 nplurals 갯수만큼의 빈 문자열을 가지는 배열을 넣어주자.
             // 예) nplurals=3; 인 경우 ['', '', '']
             // https://www.gnu.org/software/gettext/manual/html_node/Translating-plural-forms.html#Translating-plural-forms
             msgstr: [''],
             comments: { reference: `${ filename }:${ lineno },${ character }` },
-        }, isNil);
+        };
+        if (msgid_plural != null) {
+            context[msgid].msgid_plural = msgid_plural;
+        }
+        if (msgctxt != null) {
+            context[msgid].msgctxt = msgctxt;
+        }
     }
     mergeTranslations(translations: Translations) {
         merge(this.translations, translations);
